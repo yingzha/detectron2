@@ -1,0 +1,39 @@
+# _BASE_: "configs/Base-RetinaNet.yaml"
+MODEL:
+  META_ARCHITECTURE: "RetinaNet"
+  BACKBONE:
+    NAME: "build_retinanet_resnet_fpn_backbone"
+  RESNETS:
+    OUT_FEATURES: ["res3", "res4", "res5"]
+    DEPTH: 50
+  ANCHOR_GENERATOR:
+    SIZES: !!python/object/apply:eval ["[[x, x * 2**(1.0/3), x * 2**(2.0/3) ] for x in [32, 64, 128, 256, 512 ]]"]
+  FPN:
+    IN_FEATURES: ["res3", "res4", "res5"]
+  RETINANET:
+    IOU_THRESHOLDS: [0.4, 0.5]
+    IOU_LABELS: [0, -1, 1]
+    NUM_CLASSES: 1 
+    SCORE_THRESH_TEST: 0.7
+    TOPK_CANDIDATES_TEST: 500
+  WEIGHTS: "detectron2://ImageNetPretrained/MSRA/R-50.pkl"
+
+DATASETS:
+    TRAIN: ("tablebank_train",)
+    TEST: ("tablebank_valid",)
+
+SOLVER:
+  IMS_PER_BATCH: 8
+  BASE_LR: 0.005  # Note that RetinaNet uses a different default learning rate
+  STEPS: (60000, 80000)
+  MAX_ITER: 90000
+  CHECKPOINT_PERIOD: 2000
+
+INPUT:
+  MIN_SIZE_TRAIN: (640, 672, 704, 736, 768, 800)
+
+TEST:
+  EVAL_PERIOD: 1000
+
+OUTPUT_DIR:
+  ./projects/TableBank/word_latext/
