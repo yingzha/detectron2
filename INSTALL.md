@@ -12,7 +12,7 @@ also installs detectron2 with a few simple commands.
 - [torchvision](https://github.com/pytorch/vision/) that matches the PyTorch installation.
 	You can install them together at [pytorch.org](https://pytorch.org) to make sure of this.
 - OpenCV, needed by demo and visualization
-- [fvcore](https://github.com/facebookresearch/fvcore/): `pip install 'git+https://github.com/facebookresearch/fvcore'`
+- [fvcore](https://github.com/facebookresearch/fvcore/): `pip install -U 'git+https://github.com/facebookresearch/fvcore'`
 - pycocotools: `pip install cython; pip install 'git+https://github.com/cocodataset/cocoapi.git#subdirectory=PythonAPI'`
 - GCC >= 4.9
 
@@ -21,7 +21,7 @@ also installs detectron2 with a few simple commands.
 
 After having the above dependencies, run:
 ```
-git clone git@github.com:facebookresearch/detectron2.git
+git clone https://github.com/facebookresearch/detectron2.git
 cd detectron2
 python setup.py build develop
 
@@ -62,8 +62,8 @@ Note: you may need to rebuild detectron2 after reinstalling a different build of
 	```
 	print valid outputs at the time you build detectron2.
 
-+ "invalid device function": two possibilities:
++ "invalid device function" or "no kernel image is available for execution": two possibilities:
   * You build detectron2 with one version of CUDA but run it with a different version.
   * Detectron2 is not built with the correct compute compability for the GPU model.
-    The compute compability defaults to match the GPU found on the machine,
+    The compute compability defaults to match the GPU found on the machine during building,
     and can be controlled by `TORCH_CUDA_ARCH_LIST` environment variable during installation.
