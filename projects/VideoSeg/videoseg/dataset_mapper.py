@@ -3,7 +3,7 @@ import numpy as np
 import torch
 from fvcore.common.file_io import PathManager
 from PIL import Image
-from pycocotools import mask
+import pycocotools.mask as mask_utils
 
 from detectron2.data import detection_utils as utils
 from detectron2.data import transforms as T
@@ -59,12 +59,12 @@ class DatasetMapper:
         # Load masks from the previous frame
         tm1_np_mask = np.zeros((dataset_dict["height"], dataset_dict["width"]))
         for tm1_mask in dataset_dict["tm1_mask"]:
-            rle_mask = mask.frPyObjects(tm1_mask, tm1_mask.get('size')[0],
-                                        tm1_mask.get('size')[1])
+            rle_mask = mask_utils.frPyObjects(tm1_mask, tm1_mask.get('size')[0],
+                                              tm1_mask.get('size')[1])
 
             # clip the mask value to limit it to [0, 1]
             # process them as a single-channel class-agnositic mask for simplicity
-            tm1_np_mask = np.clip(tm1_np_mask + mask.decode(rle_mask), 0, 1)
+            tm1_np_mask = np.clip(tm1_np_mask + mask_utils.decode(rle_mask), 0, 1)
 
         # image has to be 3-channel.
         image = np.concatenate([image, tm1_np_mask], axis=-1)

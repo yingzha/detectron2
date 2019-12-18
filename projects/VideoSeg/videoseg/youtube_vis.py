@@ -3,7 +3,6 @@ import json
 import time
 import numpy as np
 
-from pycocotools import mask
 from detectron2.structures import BoxMode
 from detectron2.data import DatasetCatalog, MetadataCatalog
 
@@ -35,7 +34,7 @@ def get_dicts(path, start_frame=5):
             record["image_id"] = img_id
             record["tm1_file_name"] = os.path.join('/'.join(path.split('/')[:-1]),
                                                    "JPEGImages", file_names[j - 1])
-            objs = []
+            objs, tm1_mask = [], []
             for annotation in annotation_buffer:
                 if annotation["bboxes"][j] is not None:
                     bbox = annotation["bboxes"][j]
@@ -49,16 +48,8 @@ def get_dicts(path, start_frame=5):
                         }
                     objs.append(obj)
 
-                tm1_mask = np.zeros((record["height"], record["width"]))
-                tm1_mask = []
                 if annotation["bboxes"][j - 1] is not None:
                     tm1_mask.append(annotation["segmentations"][j - 1])
-                    # warning: extremely slow !!
-                    # process them as a single-channel class-agnositic mask for simplicity
-                    # rle_segment = mask.frPyObjects(rle_segment, rle_segment.get('size')[0],
-                    #                               rle_segment.get('size')[1])
-                    # clip the mask value to limit it to [0, 1]
-                    # tm1_mask = np.clip(tm1_mask + mask.decode(rle_segment), 0, 1)
 
             record["annotations"] = objs
             record["tm1_mask"] = tm1_mask
