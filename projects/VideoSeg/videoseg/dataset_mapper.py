@@ -57,15 +57,16 @@ class DatasetMapper:
         # USER: Write your own image loading if it's not from a file
         image = utils.read_image(dataset_dict["file_name"], format=self.img_format)
         # Load masks from the previous frame
-        tm1_np_mask = np.zeros((dataset_dict["height"], dataset_dict["width"], 1))
+        tm1_np_mask = np.zeros((dataset_dict["height"], dataset_dict["width"]))
         for tm1_mask in dataset_dict["tm1_mask"]:
             rle_mask = mask_utils.frPyObjects(tm1_mask, dataset_dict["height"],
                                               dataset_dict["width"])
+            rle_mask = mask_utils.merge(rle_mask)
             # clip the mask value to limit it to [0, 1]
             # process them as a single-channel class-agnositic mask for simplicity
             tm1_np_mask = np.clip(tm1_np_mask + mask_utils.decode(rle_mask), 0, 1)
         # image has to be 3-channel.
-        # image = np.concatenate([image, tm1_np_mask, axis=-1)
+        # image = np.concatenate([image, tm1_np_mask[:, :, None], axis=-1)
 
         utils.check_image_size(dataset_dict, image)
 
