@@ -1,7 +1,11 @@
+import cv2
+import copy
 import os
 import json
 import time
 import numpy as np
+
+import pycocotools.mask as mask_utils
 
 from detectron2.structures import BoxMode
 from detectron2.data import DatasetCatalog, MetadataCatalog
@@ -85,3 +89,34 @@ def register_youtube_vis_from_dicts(path, dataset_name, eval=False):
     # use coco evaluator if `eval` mode
     if eval:
         MetadataCatalog.get(dataset_name).set(evaluator_type="coco")
+
+
+def convert_labels(src_path, dst_path):
+    """Convert RLE segments into contour-like polygons."""
+    with open(src_path, "r") as fi:
+        labels = json.load(fi)
+
+    # deep copy the loaded labels
+    labels = copy.deepcopy(labels)
+    for annotation in labels["annotations"]:
+        segmentations = []
+        for segmentation in annotation["segmentations"]:
+            if segmentation is None:
+                polygon = [[]]
+            else:
+                rle_mask = mask_utils.frPyObjects(segmentation, annotation["height"],
+                                                  annotation["width"])
+                polygon_mask = mask_utils.decode(rle_mask)
+                contours, _  = cv2.findContours(polygon_mask, cv2.RETR_TREE,
+                                                cv2.CHAIN_APPROX_SIMPLE)
+                polygon = []
+                for contour in contours:
+                    polygon.append(contour.flatten().tolist())
+            segmentations.append(polygon)
+
+        annotation["segmentations"] = segmentations
+
+    with open(dst_path, "w") as fi:
+        json.dump(labels, fi)
+
+    print("Processing finished...")

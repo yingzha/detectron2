@@ -57,17 +57,15 @@ class DatasetMapper:
         # USER: Write your own image loading if it's not from a file
         image = utils.read_image(dataset_dict["file_name"], format=self.img_format)
         # Load masks from the previous frame
-        tm1_np_mask = np.zeros((dataset_dict["height"], dataset_dict["width"]))
+        tm1_np_mask = np.zeros((dataset_dict["height"], dataset_dict["width"], 1))
         for tm1_mask in dataset_dict["tm1_mask"]:
-            rle_mask = mask_utils.frPyObjects(tm1_mask, tm1_mask.get('size')[0],
-                                              tm1_mask.get('size')[1])
-
+            rle_mask = mask_utils.frPyObjects(tm1_mask, dataset_dict["height"],
+                                              dataset_dict["width"])
             # clip the mask value to limit it to [0, 1]
             # process them as a single-channel class-agnositic mask for simplicity
             tm1_np_mask = np.clip(tm1_np_mask + mask_utils.decode(rle_mask), 0, 1)
-
         # image has to be 3-channel.
-        image = np.concatenate([image, tm1_np_mask], axis=-1)
+        # image = np.concatenate([image, tm1_np_mask, axis=-1)
 
         utils.check_image_size(dataset_dict, image)
 
@@ -116,13 +114,6 @@ class DatasetMapper:
                 if not self.keypoint_on:
                     anno.pop("keypoints", None)
 
-            # USER: Implement additional transformations if you have other types of data
-            for annotation in dataset_dict["annotations"]:
-                segmentation = mask_utils.frPyObjects(annotation["segmentation"],
-                                                      dataset_dict.get("height"),
-                                                      dataset_dict.get("width"))
-                segmentation = mask_utils.decode(segmentation)
-                annotation["segmentation"] = segmentation
             annos = [
                 utils.transform_instance_annotations(
                     obj, transforms, image_shape, keypoint_hflip_indices=self.keypoint_hflip_indices
