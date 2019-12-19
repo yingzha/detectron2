@@ -45,6 +45,8 @@ def get_dicts(path, start_frame=5):
                         "category_id": annotation["category_id"] - 1,
                         # segmentation in COCO's RLE format
                         "segmentation": annotation["segmentations"][j],
+                        # uncompressed RLE
+                        "iscrowd": 0,
                         }
                     objs.append(obj)
 
