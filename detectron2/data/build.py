@@ -198,7 +198,7 @@ def print_instances_class_histogram(dataset_dicts, class_names):
     )
     log_first_n(
         logging.INFO,
-        "Distribution of training instances among all {} categories:\n".format(num_classes)
+        "Distribution of instances among all {} categories:\n".format(num_classes)
         + colored(table, "cyan"),
         key="message",
     )
@@ -336,7 +336,11 @@ def build_detection_train_loader(cfg, mapper=None):
     # Bin edges for batching images with similar aspect ratios. If ASPECT_RATIO_GROUPING
     # is enabled, we define two bins with an edge at height / width = 1.
     group_bin_edges = [1] if cfg.DATALOADER.ASPECT_RATIO_GROUPING else []
-    aspect_ratios = [float(img["height"]) / float(img["width"]) for img in dataset]
+    aspect_ratios = (
+        [float(img["height"]) / float(img["width"]) for img in dataset]
+        if cfg.DATALOADER.ASPECT_RATIO_GROUPING
+        else None
+    )
 
     if mapper is None:
         mapper = DatasetMapper(cfg, True)
