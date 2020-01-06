@@ -65,10 +65,12 @@ class DatasetMapper:
             # clip the mask value to limit it to [0, 1]
             # process them as a single-channel class-agnositic mask for simplicity
             tm1_np_mask = np.clip(tm1_np_mask + mask_utils.decode(rle_mask), 0, 1)
-        # image has to be 3-channel.
-        # image = np.concatenate([image, tm1_np_mask[:, :, None], axis=-1)
 
         utils.check_image_size(dataset_dict, image)
+
+        # image has to be 3-channel.
+        image = np.concatenate([image, tm1_np_mask[:, :, None]], axis=-1)
+        image = image.astype("uint8")
 
         if "annotations" not in dataset_dict:
             image, transforms = T.apply_transform_gens(

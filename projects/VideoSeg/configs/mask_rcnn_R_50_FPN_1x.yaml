@@ -6,6 +6,9 @@ MODEL:
     DEPTH: 50
   ROI_HEADS:
     NUM_CLASSES: 40
+  # 4-channel input
+  PIXEL_MEAN: [103.530, 116.280, 123.675, 0.0]
+  PIXEL_STD: [1.0, 1.0, 1.0, 1.0]
 
 DATASETS:
     TRAIN: ("youtube_vis_train",)
