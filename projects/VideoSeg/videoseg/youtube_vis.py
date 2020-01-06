@@ -115,7 +115,9 @@ def convert_labels(src_path, dst_path):
                                                 cv2.CHAIN_APPROX_SIMPLE)
                 polygon = []
                 for contour in contours:
-                    polygon.append(contour.flatten().tolist())
+                    contour = contour.flatten().tolist()
+                    if len(contour) >= 6:
+                        polygon.append(contour)
             segmentations.append(polygon)
 
         annotation["segmentations"] = segmentations
