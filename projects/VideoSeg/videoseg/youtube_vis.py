@@ -57,6 +57,10 @@ def get_dicts(path, start_frame=5):
                 if annotation["bboxes"][j - 1] is not None:
                     tm1_mask.append(annotation["segmentations"][j - 1])
 
+            # skip if the previous frame has no segments
+            if not tm1_mask:
+                continue
+
             record["annotations"] = objs
             record["tm1_mask"] = tm1_mask
 
