@@ -22,7 +22,8 @@ class DatasetMapper:
             self.crop_gen = None
 
         self.tfm_gens = utils.build_transform_gen(cfg, is_train)
-
+        # remove random flipping
+        self.tfm_gens.pop()
         # fmt: off
         self.img_format     = cfg.INPUT.FORMAT
         self.mask_on        = cfg.MODEL.MASK_ON
@@ -68,10 +69,6 @@ class DatasetMapper:
 
         utils.check_image_size(dataset_dict, image)
 
-        # image has to be 3-channel.
-        image = np.concatenate([image, tm1_np_mask[:, :, None]], axis=-1)
-        image = image.astype("uint8")
-
         if "annotations" not in dataset_dict:
             image, transforms = T.apply_transform_gens(
                 ([self.crop_gen] if self.crop_gen else []) + self.tfm_gens, image
@@ -91,7 +88,12 @@ class DatasetMapper:
                 transforms = crop_tfm + transforms
 
         image_shape = image.shape[:2]  # h, w
+        pil_tm1_mask = Image.fromarray(tm1_np_mask)
 
+        # hardcode
+        pil_tm1_mask = pil_tm1_mask.resize(image_shape[::-1], 2)
+        tm1_np_mask = np.asarray(pil_tm1_mask)[:, :, None].astype("uint8")
+        image = np.concatenate([image, tm1_np_mask], axis=-1)
         # Pytorch's dataloader is efficient on torch.Tensor due to shared-memory,
         # but not efficient on large generic data structures due to the use of pickle & mp.Queue.
         # Therefore it's important to use torch.Tensor.
