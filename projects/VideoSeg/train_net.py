@@ -133,8 +133,11 @@ def setup(args):
 
 
 def main(args):
-    register_youtube_vis_from_dicts("/mnt/datasets/public/youtube-vis/train/train_v2.json",
+    register_youtube_vis_from_dicts("/mnt/datasets/public/youtube-vis/train/train_person.json",
                                     "youtube_vis_train")
+
+    register_youtube_vis_from_dicts("/mnt/datasets/public/youtube-vis/train/train_person.json",
+                                    "youtube_vis_val", eval=True)
 
     cfg = setup(args)
     if args.eval_only:

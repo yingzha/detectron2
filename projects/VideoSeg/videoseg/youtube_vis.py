@@ -3,6 +3,7 @@ import copy
 import os
 import json
 import time
+import random
 import numpy as np
 
 import pycocotools.mask as mask_utils
@@ -11,7 +12,7 @@ from detectron2.structures import BoxMode
 from detectron2.data import DatasetCatalog, MetadataCatalog
 
 
-def get_dicts(path, start_frame=5):
+def get_dicts(path, start_frame=5, only_people=True, eval=False, seed=2020):
     start = time.time()
 
     with open(path, "r") as fi:
@@ -42,11 +43,12 @@ def get_dicts(path, start_frame=5):
             for annotation in annotation_buffer:
                 if annotation["bboxes"][j] is not None:
                     bbox = annotation["bboxes"][j]
+                    category_id = 0 if only_people else annotation["category_id"] - 1
                     obj = {
                         "bbox": bbox,
                         "bbox_mode": BoxMode.XYWH_ABS,
                         # `category_id` in the original format starts from 1
-                        "category_id": annotation["category_id"] - 1,
+                        "category_id": category_id,
                         # segmentation in COCO's RLE format
                         "segmentation": annotation["segmentations"][j],
                         # uncompressed RLE
@@ -68,6 +70,14 @@ def get_dicts(path, start_frame=5):
             img_id += 1
             final_labels.append(record)
 
+    indices = list(range(len(final_labels)))
+    random.seed(seed)
+    random.shuffle(indices)
+    if eval:
+        final_labels = [final_labels[ind] for ind in indices[int(0.8 * len(indices)):]]
+    else:
+        final_labels = [final_labels[ind] for ind in indices[:int(0.8 * len(indices))]]
+
     end = time.time()
     hours, rem = divmod(end - start, 3600)
     minutes, seconds = divmod(rem, 60)
@@ -75,7 +85,10 @@ def get_dicts(path, start_frame=5):
     return final_labels
 
 
-def get_thing_classes(path):
+def get_thing_classes(path, only_people=True):
+    if only_people:
+        return ['person']
+
     with open(path, "r") as fi:
         labels = json.load(fi)
     # obtain `thing_classes`
@@ -86,7 +99,7 @@ def get_thing_classes(path):
 
 def register_youtube_vis_from_dicts(path, dataset_name, eval=False):
     def get_youtube_vis_labels():
-        return get_dicts(path)
+        return get_dicts(path, eval)
     thing_classes = get_thing_classes(path)
     DatasetCatalog.register(dataset_name, get_youtube_vis_labels)
     MetadataCatalog.get(dataset_name).set(thing_classes=thing_classes)
@@ -95,14 +108,17 @@ def register_youtube_vis_from_dicts(path, dataset_name, eval=False):
         MetadataCatalog.get(dataset_name).set(evaluator_type="coco")
 
 
-def convert_labels(src_path, dst_path):
+def convert_labels(src_path, dst_path, only_people=True, seed=2020):
     """Convert RLE segments into contour-like polygons."""
     with open(src_path, "r") as fi:
         labels = json.load(fi)
 
     # deep copy the loaded labels
     labels = copy.deepcopy(labels)
+    annotations = []
     for annotation in labels["annotations"]:
+        if annotation["category_id"] not in [1, 11] and only_people:
+            continue
         segmentations = []
         for segmentation in annotation["segmentations"]:
             if segmentation is None:
@@ -121,7 +137,10 @@ def convert_labels(src_path, dst_path):
             segmentations.append(polygon)
 
         annotation["segmentations"] = segmentations
+        annotations.append(annotation)
 
+    # get the filtered labels
+    labels["annotations"] = annotations
     with open(dst_path, "w") as fi:
         json.dump(labels, fi)
 
