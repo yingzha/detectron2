@@ -92,7 +92,7 @@ class DatasetMapper:
 
         # hardcode
         pil_tm1_mask = pil_tm1_mask.resize(image_shape[::-1], 2)
-        tm1_np_mask = np.asarray(pil_tm1_mask)[:, :, None].astype("uint8")
+        tm1_np_mask = (np.asarray(pil_tm1_mask) * 255.)[:, :, None].astype("uint8")
         image = np.concatenate([image, tm1_np_mask], axis=-1)
         # Pytorch's dataloader is efficient on torch.Tensor due to shared-memory,
         # but not efficient on large generic data structures due to the use of pickle & mp.Queue.
