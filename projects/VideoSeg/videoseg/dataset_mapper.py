@@ -58,9 +58,10 @@ class DatasetMapper:
         dataset_dict = copy.deepcopy(dataset_dict)  # it will be modified by code below
         # USER: Write your own image loading if it's not from a file
         image = utils.read_image(dataset_dict["file_name"], format=self.img_format)
+
         # Load masks from the previous frame
+        tm1_np_mask = np.zeros((dataset_dict["height"], dataset_dict["width"]))
         if not self.init_frame:
-            tm1_np_mask = np.zeros((dataset_dict["height"], dataset_dict["width"]))
             for tm1_mask in dataset_dict["tm1_mask"]:
                 rle_mask = mask_utils.frPyObjects(tm1_mask, dataset_dict["height"],
                                                   dataset_dict["width"])
@@ -90,12 +91,12 @@ class DatasetMapper:
                 transforms = crop_tfm + transforms
 
         image_shape = image.shape[:2]  # h, w
-        if not self.init_frame:
-            pil_tm1_mask = Image.fromarray(tm1_np_mask)
-            # hardcode
-            pil_tm1_mask = pil_tm1_mask.resize(image_shape[::-1], 2)
-            tm1_np_mask = (np.asarray(pil_tm1_mask) * 255.)[:, :, None].astype("uint8")
-            image = np.concatenate([image, tm1_np_mask], axis=-1)
+
+        pil_tm1_mask = Image.fromarray(tm1_np_mask)
+        # hardcode
+        pil_tm1_mask = pil_tm1_mask.resize(image_shape[::-1], 2)
+        tm1_np_mask = (np.asarray(pil_tm1_mask) * 255.)[:, :, None].astype("uint8")
+        image = np.concatenate([image, tm1_np_mask], axis=-1)
         # Pytorch's dataloader is efficient on torch.Tensor due to shared-memory,
         # but not efficient on large generic data structures due to the use of pickle & mp.Queue.
         # Therefore it's important to use torch.Tensor.

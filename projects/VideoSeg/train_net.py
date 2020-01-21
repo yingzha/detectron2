@@ -38,6 +38,7 @@ from detectron2.evaluation import (
 )
 from detectron2.modeling import GeneralizedRCNNWithTTA
 from videoseg.youtube_vis import register_youtube_vis_from_dicts
+from videoseg.coco import register_coco_person_from_dicts
 from videoseg.dataset_mapper import DatasetMapper
 
 
@@ -133,13 +134,23 @@ def setup(args):
 
 
 def main(args):
-    register_youtube_vis_from_dicts("/mnt/datasets/public/youtube-vis/train/train_person.json",
-                                    "youtube_vis_train")
-
-    register_youtube_vis_from_dicts("/mnt/datasets/public/youtube-vis/train/train_person.json",
-                                    "youtube_vis_val", eval=True)
-
     cfg = setup(args)
+    if cfg.DATASETS.TRAIN == ("youtube_vis_train",):
+        register_youtube_vis_from_dicts("/mnt/datasets/public/youtube-vis/train/train_person.json",
+                                        "youtube_vis_train")
+    else:
+        register_coco_person_from_dicts("coco_person_train",
+                                        "/mnt/datasets/public/coco/annotations/instances_train2017.json",
+                                        "/mnt/datasets/public/coco/train2017", set_="train")
+
+    if cfg.DATASETS.TEST == ("youtube_vis_val",):
+        register_youtube_vis_from_dicts("/mnt/datasets/public/youtube-vis/train/train_person.json",
+                                        "youtube_vis_val", eval=True)
+    else:
+        register_coco_person_from_dicts("coco_person_val",
+                                        "/mnt/datasets/public/coco/annotations/instances_val2017.json",
+                                        "/mnt/datasets/public/coco/val2017", set_="val")
+
     if args.eval_only:
         model = Trainer.build_model(cfg)
         DetectionCheckpointer(model, save_dir=cfg.OUTPUT_DIR).resume_or_load(
